@@ -1,4 +1,3 @@
-// C++17
 #include <bits/stdc++.h>
 
 using namespace std;
@@ -25,8 +24,6 @@ static const int dr[] = {0, -1, 0, 1};
 static const int dc[] = {-1, 0, 1, 0};    
 
 char grid[32][32];
-int dp[32][32];
-pii pre[32][32];
 
 bool inGrid(int r, int c) {
     return (r >= 0 && r < N && c >= 0 && c < N);
@@ -46,56 +43,6 @@ void makeMove(int r, int c, int r2, int c2) {
 char getDirection(int sx, int sy, int dx, int dy) {
     if (sx == dx) return (sy + 1 == dy ? 'R' : 'L');
     return (sx + 1 == dx ? 'D' : 'U');
-}
-
-int dfs(int x, int y, int dx, int dy, vector<pii>& path) {
-    int& res = dp[x][y];
-    if (res != -1) return res;
-    res = 0;
-    path.PB(MP(x, y));
-    if (x == dx && y == dy) return 1;
-    for (int i = 0; i < 4; ++ i) {
-        auto nx = x + dr[i], ny = y + dc[i];
-        if (inGrid(nx, ny) && grid[nx][ny] == '.') {
-            auto ret = dfs(nx, ny, dx, dy, path);
-            if (ret) {
-                res = 1;
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
-
-int bfs(int sx, int sy, int dx, int dy, vector<pii>& path) {
-    if (dp[sx][sy] != -1) return dp[sx][sy];
-    dp[sx][sy] = 0;
-    queue<pii> q;
-    q.push(MP(sx, sy));
-    while (SZ(q) > 0) {
-        auto elem = q.front();
-        q.pop();
-        if (F(elem) == dx && S(elem) == dy) {
-            auto x = dx, y = dy;
-            while (true) {
-                path.PB(MP(x, y));
-                if (x == sx && y == sy) break;
-                auto nx = F(pre[x][y]), ny = S(pre[x][y]);
-                x = nx, y = ny;
-            }
-            reverse(ALL(path));
-            return 1;
-        }
-        for (int i = 0; i < 4; ++ i) {
-            auto nx = F(elem) + dr[i], ny = S(elem) + dc[i];
-            if (inGrid(nx, ny) && ((nx == dx && ny == dy) || grid[nx][ny] == '.') && dp[nx][ny] == -1) {
-                dp[nx][ny] = 0;
-                pre[nx][ny] = elem;
-                q.push(MP(nx, ny));
-            }
-        }
-    }
-    return 0;
 }
 
 bool randomChoose(pii e, char target, string& moves) {
