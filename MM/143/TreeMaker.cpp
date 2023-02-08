@@ -2,7 +2,6 @@
 
 using namespace std;
 
-#define INF (1 << 30)
 #define SZ(v) ((int)(v).size())
 #define PB push_back
 #define MP make_pair
@@ -44,23 +43,23 @@ pii move(int tile, int tile_color, int idx, int didx, int n) {
 
 void dfs(int x, int y, int n, vector<vb>& f) {
     f[x][y] = true;
-    if (x > 0 && ((1 << grid[x][y]) & dmask[0]) != 0 && !f[x - 1][y]) {
-        if (((1 << grid[x - 1][y]) & dmask[2]) != 0 && colors[x][y] == colors[x - 1][y]) {
+    if (x > 0 && (grid[x][y] & dmask[0]) != 0 && !f[x - 1][y]) {
+        if ((grid[x - 1][y] & dmask[2]) != 0 && colors[x][y] == colors[x - 1][y]) {
             dfs(x - 1, y, n, f);
         }
     }
-    if (x < n - 1 && ((1 << grid[x][y]) & dmask[2]) != 0 && !f[x + 1][y]) {
-        if (((1 << grid[x + 1][y]) & dmask[0]) != 0 && colors[x][y] == colors[x + 1][y]) {
+    if (x < n - 1 && (grid[x][y] & dmask[2]) != 0 && !f[x + 1][y]) {
+        if ((grid[x + 1][y] & dmask[0]) != 0 && colors[x][y] == colors[x + 1][y]) {
             dfs(x + 1, y, n, f);
         }
     }
-    if (y < n - 1 && ((1 << grid[x][y]) & dmask[1]) != 0 && !f[x][y + 1]) {
-        if (((1 << grid[x][y + 1]) & dmask[3]) != 0 && colors[x][y] == colors[x][y + 1]) {
+    if (y < n - 1 && (grid[x][y] & dmask[1]) != 0 && !f[x][y + 1]) {
+        if ((grid[x][y + 1] & dmask[3]) != 0 && colors[x][y] == colors[x][y + 1]) {
             dfs(x, y + 1, n, f);
         }
     }
-    if (y > 0 && ((1 << grid[x][y]) & dmask[3]) != 0 && !f[x][y - 1]) {
-        if (((1 << grid[x][y - 1]) & dmask[1]) != 0 && colors[x][y] == colors[x][y - 1]) {
+    if (y > 0 && (grid[x][y] & dmask[3]) != 0 && !f[x][y - 1]) {
+        if ((grid[x][y - 1] & dmask[1]) != 0 && colors[x][y] == colors[x][y - 1]) {
             dfs(x, y - 1, n, f);
         }
     }
@@ -70,29 +69,29 @@ int count_broken_pipes(int n) {
     auto res = 0;
     for (int x = 0; x < n; ++ x) for (int y = 0; y < n; ++ y) {
         if (grid[x][y] == 0) ++ res;
-        if (((1 << grid[x][y]) & dmask[0]) != 0) {
+        if ((grid[x][y] & dmask[0]) != 0) {
             if (x == 0) {
                 ++ res;
             } else {
-                if (((1 << grid[x - 1][y]) & dmask[2]) == 0 || colors[x][y] != colors[x - 1][y]) {
+                if ((grid[x - 1][y] & dmask[2]) == 0 || colors[x][y] != colors[x - 1][y]) {
                     ++ res;
                 }
             }
         }
-        if (((1 << grid[x][y]) & dmask[1]) != 0) {
+        if ((grid[x][y] & dmask[1]) != 0) {
             if (y == n - 1) {
                 ++ res;
             } else {
-                if (((1 << grid[x][y + 1]) & dmask[3]) == 0 || colors[x][y] != colors[x][y + 1]) {
+                if ((grid[x][y + 1] & dmask[3]) == 0 || colors[x][y] != colors[x][y + 1]) {
                     ++ res;
                 }
             }
         }
-        if (((1 << grid[x][y]) & dmask[2]) != 0) {
-            if (x == n - 1 || ((1 << grid[x + 1][y]) & dmask[0]) == 0) ++ res;
+        if ((grid[x][y] & dmask[2]) != 0) {
+            if (x == n - 1 || (grid[x + 1][y] & dmask[0]) == 0) ++ res;
         }
-        if (((1 << grid[x][y]) & dmask[3]) != 0) {
-            if (y == 0 || ((1 << grid[x][y - 1]) & dmask[1]) == 0) ++ res;
+        if ((grid[x][y] & dmask[3]) != 0) {
+            if (y == 0 || (grid[x][y - 1] & dmask[1]) == 0) ++ res;
         }
     }
     return res;
@@ -104,28 +103,24 @@ int main(int argc, char** argv) {
     for (int row = 0; row < N; ++ row) for (int col = 0; col < N; ++ col) {
         cin >> grid[row][col] >> colors[row][col];
     }
+    for (int i = 0; i < N; ++ i) for (int j = 0; j < N; ++ j) {
+        tg[i][j] = grid[i][j];
+        tc[i][j] = colors[i][j];
+    }
     int tile, tile_color;
     cin >> tile >> tile_color;
-    vs output;
+    vector<vs> output(32);
     vector<vb> f(N, vb(N, false));
     vi cnt(10, 0);
-    auto best = INF, cidx = -1;
-    for (int i = 0; i < 10000; ++ i) {
-        auto tt = tile, ttc = tile_color;
-        for (int x = 0; x < N; ++ x) for (int y = 0; y < N; ++ y) {
-            tg[x][y] = grid[x][y];
-            tc[x][y] = colors[x][y];
-        }
-        auto ibest = INF, idx = -1, didx = -1, ntile = -1, ntile_color = -1;
-        for (int j = 0; j < N; ++ j) for (int di = 0; di <= 3; ++ di) {
-            for (int x = 0; x < N; ++ x) for (int y = 0; y < N; ++ y) {
-                grid[x][y] = tg[x][y];
-                colors[x][y] = tc[x][y];
-            }
-            tile = tt;
-            tile_color = ttc;
-            auto ret = move(tile, tile_color, j, di, N);
-            for (int k = 0; k < N; ++ k) fill(f[k].begin(), f[k].end(), false);
+    auto best = 1 << 30, tidx = -1, cidx = -1;
+    srand(time(NULL));
+    for (int t = 0; t < 32; ++ t) {
+        for (int i = 0; i < 10000; ++ i) {
+            auto idx = rand() % N, didx = rand() % 4;
+            auto ret = move(tile, tile_color, idx, didx, N);
+            tile = F(ret);
+            tile_color = S(ret);
+            for (int j = 0; j < N; ++ j) fill(f[j].begin(), f[j].end(), false);
             fill(cnt.begin(), cnt.end(), 0);
             for (int x = 0; x < N; ++ x) for (int y = 0; y < N; ++ y) {
                 if (!f[x][y]) {
@@ -136,21 +131,20 @@ int main(int argc, char** argv) {
             auto E = count_broken_pipes(N);
             auto cost = i + 1;
             cost += E * P;
-            for (int k = 0; k < C; ++ k) cost += cnt[k] * cnt[k];
-            if (cost < ibest) {
-                ibest = cost;
-                idx = j;
-                didx = di;
-                ntile = F(ret);
-                ntile_color = S(ret);
+            for (int j = 0; j < 4; ++ j) cost += cnt[j] * cnt[j];
+            if (cost < best) {
+                best = cost;
+                tidx = t;
+                cidx = i;
             }
+            output[t].PB(dirs[didx] + " " + to_string(idx));
         }
-        if (ibest < best) cidx = i;
-        tile = ntile;
-        tile_color = ntile_color;
-        output.PB(dirs[didx] + " " + to_string(idx));
+        for (int i = 0; i < N; ++ i) for (int j = 0; j < N; ++ j) {
+            grid[i][j] = tg[i][j];
+            colors[i][j] = tc[i][j];
+        }
     }
     cout << cidx + 1 << endl;
-    for (int i = 0; i <= cidx; ++ i) cout << output[i] << endl;
+    for (int i = 0; i <= cidx; ++ i) cout << output[tidx][i] << endl;
     return 0;
 }
