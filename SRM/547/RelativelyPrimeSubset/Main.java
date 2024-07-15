@@ -1,92 +1,60 @@
 import java.util.*;
 import java.math.*;
 
-class XD implements Comparable<XD> {
-    int mask; 
-    int bc;
-
-    public XD(int mask) {
-        this.mask = mask;
-        this.bc = 0;
-        for (int i = 0; (1 << i) <= mask; ++ i) {
-            if ((mask & (1 << i)) != 0) ++ this.bc;
-        }
-    }
-
-    public boolean include(XD xd) {
-        for (int i = 0; (1 << i) <= xd.mask; ++ i) if ((xd.mask & (1 << i)) != 0) {
-            if ((this.mask & (1 << i)) == 0) return false;
-        }
-        return true;
-    }
-
-    @Override
-    public int compareTo(XD xd) {
-        return xd.bc - this.bc;
-    }
-}
-
 public class Main {
-    int recur(int n, int cnt, int mask, Integer best, List<Map<Integer, Integer>> dp, List<XD> xds) {
-        if (n < 0) return 0;
-        if (n + 1 + cnt <= best) return -1;
-        if (dp.get(n).containsKey(mask)) return dp.get(n).get(mask);
-        int res = recur(n - 1, cnt, mask, best, dp, xds);
-        if ((xds.get(n).mask & mask) == 0) {
-            int ret = recur(n - 1, cnt + 1, mask | xds.get(n).mask, best, dp, xds);
-            if (ret != -1) res = Math.max(res, ret + 1);
+    List<Integer> sieve(int m) {
+        var res = new ArrayList<Integer>();
+        var f = new boolean[m + 1];
+        for (int i = 2; i <= m; ++ i) if (!f[i]) {
+            res.add(i);
+            for (int j = i * i; j <= m; j += i) f[j] = true;
         }
-        best = Math.max(best, res);
-        dp.get(n).put(mask, res);
+        return res;
+    }
+
+    int recur(int mask, int idx, int[] s, boolean[] f, int[] b, int[][] dp) {
+        if (idx == s.length) return 0;
+        var res = dp[mask][idx];
+        if (res != -1) return res;
+        res = recur(mask, idx + 1, s, f, b, dp);
+        if (!f[s[idx]] && (mask & b[idx]) == 0) {
+            var ret = recur(mask | b[idx], idx + 1, s, f, b, dp);
+            res = Math.max(res, ret + 1);
+        }
+        dp[mask][idx] = res;
         return res;
     }
 
     public int findSize(int[] s) {
-        int n = s.length;
+        final int m = 100;
+        var p = sieve(m);
+        var n = s.length;
         Arrays.sort(s);
-        final int b = 100;
-        List<Integer> p = new ArrayList<Integer>();
-        boolean[] f = new boolean[b + 1];
-        for (int i = 2; i <= b; ++ i) if (!f[i]) {
-            boolean ok = false;
-            for (int j = 0; j < n; ++ j) if (s[j] % i == 0) {
-                ok = true;
+        var b = new int[n];
+        for (int i = 0; i < n; ++ i) for (int j = 0; j < p.size(); ++ j) {
+            if (s[i] % p.get(j) == 0) b[i] |= 1 << j;
+        }
+        var f = new boolean[m + 1];
+        var res = 0;
+        for (int i = 0; i < n; ++ i) if (i == 0 || s[i] != s[i - 1]) {
+            for (int j = 15; j < p.size(); ++ j) if (s[i] % p.get(j) == 0) {
+                f[s[i]] = true;
+                ++ res;
                 break;
             }
-            if (ok) p.add(i);
-            for (int j = i * i; j <= b; j += i) f[j] = true;
         }
-        XD[] xds = new XD[n];
-        for (int i = 0; i < n; ++ i) {
-            xds[i] = new XD(0);
-            for (int j = 0; j < p.size(); ++ j) if (s[i] % p.get(j) == 0) {
-                xds[i].mask |= (1 << j);
-            }
-        }
-        Arrays.sort(xds);
-        List<XD> nxds = new ArrayList<XD>();
-        f = new boolean[n];
-        for (int i = n - 1; i >= 0; -- i) {
-            if (!f[i]) {
-                nxds.add(xds[i]);
-                continue;
-            }
-            for (int j = i - 1; j >= 0; -- j) {
-                if (xds[j].include(xds[i])) f[j] = true;
-            }
-        }
-        n = nxds.size();
-        List<Map<Integer, Integer>> dp = new ArrayList<Map<Integer, Integer>>();
-        for (int i = 0; i < n; ++ i) dp.add(new TreeMap<Integer, Integer>());
-        Integer best = 0;
-        return recur(n - 1, 0, 0, best, dp, nxds);
+        var dp = new int[1 << 15][n + 1];
+        for (int i = 0; i < dp.length; ++ i) Arrays.fill(dp[i], -1);
+        var ret = recur(0, 0, s, f, b, dp);
+        res += ret;
+        return res;
     }
 
     public static void main(String[] args) {
-        Main main = new Main(); 
+        var main = new Main();
 
-        int[] s = new int[]{2, 3, 7, 11, 4};
-        int ret = main.findSize(s);
+        var s = new int[]{2, 3, 7, 11, 4};
+        var ret = main.findSize(s);
         System.out.println(ret);
 
         s = new int[]{4, 8, 12, 16};
