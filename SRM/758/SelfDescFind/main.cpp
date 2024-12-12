@@ -60,7 +60,7 @@ class SelfDescFind {
             if (d[0] == 0 && (SZ(d) == 1 || d[1] != 1)) return "";
             auto bc = 0, bound = SZ(d) << 1;
             string ans = "";
-            zflag = d[0] == 0 ? true : false;
+            zflag = (d[0] == 0);
             if (d[0] == 0) {
                 bc = 1;
                 ans = "10";
